@@ -20,7 +20,7 @@ public class MyPostNotificationReceiver extends BroadcastReceiver {
 		Intent displayIntent = new Intent(context, PikachuDisplayActivity.class);
 		String text = intent.getStringExtra(CONTENT_KEY);
 		Notification notification = new Notification.Builder(context)
-				.setSmallIcon(R.mipmap.ic_launcher)
+				.setSmallIcon(R.mipmap.pika_icon_hdpi)
 				.setContentTitle(text)
 				.extend(new Notification.WearableExtender()
 						.setDisplayIntent(PendingIntent.getActivity(context, 0, displayIntent,
