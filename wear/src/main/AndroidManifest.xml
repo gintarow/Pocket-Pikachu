@@ -33,6 +33,12 @@
                 <action android:name="com.gintarow.apps.pocketpikachu.SHOW_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".PcoketPikachuService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>
