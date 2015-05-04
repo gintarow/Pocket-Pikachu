@@ -1,5 +1,8 @@
 package com.gintarow.apps.pocketpikachu;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -19,8 +22,8 @@ import android.util.Log;
  * ・ワット数
  * ・仲良し度
  */
-public class PcoketPikachuService extends Service implements SensorEventListener{
-	public PcoketPikachuService() {
+public class PocketPikachuService extends Service implements SensorEventListener{
+	public PocketPikachuService() {
 	}
 
 	static final String TAG = "PocketPikachuService";
@@ -36,17 +39,17 @@ public class PcoketPikachuService extends Service implements SensorEventListener
 	static final String KEY_PREF_STEP_TOTAL = "stepTotal";
 	static final String KEY_PREF_STEP_YESTERDAY  = "stepYesterday";
 	static final String KEY_PREF_FRIEND_POINT = "friendPoint";
-	static final String KEY_PREF_FRIEND_WATT = "WattPoint";
+	static final String KEY_PREF_WATT_POINT = "WattPoint";
 
-	static int stepToday = 0;
-	static int stepTotal = 0;
-	static int prevStep = -1;
+	int stepToday = 0;
+	int stepTotal = 0;
+	int prevStep = -1;
 
-	static int watt = 0;
-	static int wattCount = 0;
+	int watt = 0;
+	int wattCount = 0;
 
 	static final int MSG_SAVE_STATUS = 0;
-	static final int MSG_DAILY_RESET = 1;
+//	static final int MSG_DAILY_RESET = 1;
 	static final long StatusSaveIntervalMs = 60 * 60 * 1000;
 
 
@@ -73,6 +76,7 @@ public class PcoketPikachuService extends Service implements SensorEventListener
 						if((timeMs/(1000*60*60)%24)==0){
 							sharedPreferences.edit().putInt(KEY_PREF_STEP_YESTERDAY, stepToday).apply();
 							stepToday = 0;
+							//todo 仲良しポイント減点
 						}
 						savePikachuStatus();
 						StepCountUpdater.sendEmptyMessageDelayed(MSG_SAVE_STATUS, delayMs);
@@ -81,8 +85,8 @@ public class PcoketPikachuService extends Service implements SensorEventListener
 //
 //						break;
 				}
-			}else{
-				return;
+//			}else{
+//				return;
 			}
 		}
 	};
@@ -145,6 +149,9 @@ public class PcoketPikachuService extends Service implements SensorEventListener
 			sensorFlag = true;
 		}
 
+		//通知
+		notificationUpdater();
+
 		return START_STICKY;		//再起動しない
 	}
 
@@ -154,12 +161,22 @@ public class PcoketPikachuService extends Service implements SensorEventListener
 				.putInt(KEY_PREF_FRIEND_POINT, friendStatusManager.getFriendPoint())
 				.putInt(KEY_PREF_STEP_TODAY, stepToday)
 				.putInt(KEY_PREF_STEP_TOTAL, stepTotal)
+				.putInt(KEY_PREF_WATT_POINT, watt)
 				.apply();
 	}
 
 
 	public void notificationUpdater(){
-
+		//todo 通知
+		Intent displayIntent = new Intent(getApplicationContext(), PikachuDisplayActivity.class);
+		Notification notification = new Notification.Builder(getApplicationContext())
+				.setSmallIcon(R.mipmap.pika_icon_hdpi)
+				.setContentTitle(String.valueOf(stepToday))
+				.extend(new Notification.WearableExtender()
+						.setDisplayIntent(PendingIntent.getActivity(getApplicationContext(), 0, displayIntent,
+								PendingIntent.FLAG_UPDATE_CURRENT)))
+				.build();
+		((NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, notification);
 	}
 
 
