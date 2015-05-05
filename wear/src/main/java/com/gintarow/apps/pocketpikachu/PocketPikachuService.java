@@ -7,6 +7,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -50,6 +52,8 @@ public class PocketPikachuService extends Service implements SensorEventListener
 	int stepToday = 0;
 	int stepTotal = 0;
 	int prevStep = -1;
+
+	Bitmap bgNotif;
 
 	int watt = 0;
 	int wattCount = 0;
@@ -190,7 +194,9 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		Log.d(TAG,"notificationUpdater");
 		Intent displayIntent = new Intent(getApplicationContext(), PikachuDisplayActivity.class);
 
-//		Bitmap bg =
+		bgNotif = BitmapFactory.decodeResource(getResources(), R.mipmap.pika_bg);
+//		bgNotif = BitmapFactory.decodeResource(getResources(), R.color.yellow);
+		// todo 仲良し度に合わせた画像		背景は画面、ピカチュウはカラー → GIMPでつくる
 
 		Notification secondPage = new NotificationCompat.Builder(this)
 				.setContentTitle(getString(R.string.step_total))
@@ -209,15 +215,16 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		Notification notification = new Notification.Builder(getApplicationContext())
 				.setPriority(1)
 				.setSmallIcon(R.mipmap.pika_icon_a)
-				.setColor(0x00000000)
+				.setLargeIcon(bgNotif)
 				.setContentTitle(getString(R.string.step_today) + String.format("%12d 歩", stepToday))
 				.setContentText(String.format("%21d Watt", watt))
 				.extend(new Notification.WearableExtender()
-						.addPage(secondPage))
+						.addPage(secondPage)
+//						.setBackground(bgNotif)
+						.setCustomSizePreset(Notification.WearableExtender.SIZE_XSMALL))
 //						.addPage(thirdPage))
 //						.setDisplayIntent(PendingIntent.getActivity(getApplicationContext(), 0, displayIntent,
 //								PendingIntent.FLAG_UPDATE_CURRENT)))
-				.setColor(0xffff00)
 				.addAction(R.mipmap.pika_icon_a,    //todo 白地アイコン作成
 						getString(R.string.show_status),
 						PendingIntent.getActivity(getApplicationContext(), 0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT))
