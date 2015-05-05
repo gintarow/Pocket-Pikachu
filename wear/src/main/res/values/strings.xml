@@ -1,5 +1,12 @@
 <resources>
 	<string name="app_name">PocketPikachu</string>
+	<string name="app_activity">ピカチュウ</string>
+	<string name="app_notif_msg">Pikachu</string>
+	<string name="show_status">ようすをみる</string>
+	<string name="step_ho">歩</string>
+	<string name="step_today">今日</string>
+	<string name="step_total">Total</string>
+	<string name="notif_title_friend">Pikachuと</string>
 
 	<string name="hello">Hello World!</string>
 	<string name="title">Hello Notification!</string>

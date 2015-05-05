@@ -13,6 +13,7 @@ public class PikachuDisplayActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_display);
-		mTextView = (TextView) findViewById(R.id.text);
+		mTextView = (TextView) findViewById(R.id.step_today);
+//		mTextView.setText("");
 	}
 }

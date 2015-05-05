@@ -2,8 +2,11 @@ package com.gintarow.apps.pocketpikachu;
 
 /**
  * Created by Kikuchi on 15/05/04.
+ * 他のクラスからも見たいからSingletonにしたい?
  */
 public class FriendStatusManager {
+
+	static FriendStatusManager friendStatusManager = null;
 
 	int friendStatus;
 	int friendPoint;
@@ -18,6 +21,7 @@ public class FriendStatusManager {
 		friendPoint = point;
 		updateFriendStatus();
 	}
+
 
 	private void updateFriendStatus(){
 		if(friendPoint<=-30){
