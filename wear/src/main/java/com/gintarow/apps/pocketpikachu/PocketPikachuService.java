@@ -47,7 +47,8 @@ public class PocketPikachuService extends Service implements SensorEventListener
 	static final String KEY_PREF_STEP_TOTAL = "stepTotal";
 	static final String KEY_PREF_STEP_YESTERDAY  = "stepYesterday";
 	static final String KEY_PREF_FRIEND_POINT = "friendPoint";
-	static final String KEY_PREF_WATT_POINT = "WattPoint";
+	static final String KEY_PREF_WATT_POINT = "wattPoint";
+	static final String KEY_PREF_WATT_COUNT = "wattCount";
 
 	int stepToday = 0;
 	int stepTotal = 0;
@@ -115,6 +116,8 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		String date = calendar.get(Calendar.YEAR)+String.format("%02d",calendar.get(Calendar.MONTH)+1)+String.format("%02d",calendar.get(Calendar.DAY_OF_MONTH));
 
 		sharedPreferences = getSharedPreferences(KEY_PREFERENCES, Context.MODE_PRIVATE);
+		watt = sharedPreferences.getInt(KEY_PREF_WATT_POINT, 0);
+		wattCount = sharedPreferences.getInt(KEY_PREF_WATT_COUNT, 0);
 		friendStatusManager = new FriendStatusManager(sharedPreferences.getInt(KEY_PREF_FRIEND_POINT, 0));
 		stepTotal = sharedPreferences.getInt(KEY_PREF_STEP_TOTAL, 0);
 		String tmpDate = sharedPreferences.getString(KEY_PREF_STEP_DATE,"");
@@ -186,11 +189,12 @@ public class PocketPikachuService extends Service implements SensorEventListener
 				.putInt(KEY_PREF_STEP_TODAY, stepToday)
 				.putInt(KEY_PREF_STEP_TOTAL, stepTotal)
 				.putInt(KEY_PREF_WATT_POINT, watt)
+				.putInt(KEY_PREF_WATT_COUNT, wattCount)
 				.apply();
 	}
 
 
-	public void notificationUpdater(){
+	public void notificationUpdater(){	//todo 通知の更新
 		Log.d(TAG,"notificationUpdater");
 		Intent displayIntent = new Intent(getApplicationContext(), PikachuDisplayActivity.class);
 
