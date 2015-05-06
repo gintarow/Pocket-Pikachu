@@ -50,18 +50,23 @@ public class PocketPikachuService extends Service implements SensorEventListener
 	static final String KEY_PREF_WATT_POINT = "wattPoint";
 	static final String KEY_PREF_WATT_COUNT = "wattCount";
 
+	static final int MSG_SAVE_STATUS = 0;
+	static final int MSG_UPDATE_NOTIFICATION = 1;
+	static final long StatusSaveIntervalMs = 60 * 60 * 1000;
+	static final long NotificationUpdateIntervalMs = 15 * 60 * 1000;
+
 	int stepToday = 0;
 	int stepTotal = 0;
 	int prevStep = -1;
-
-	Bitmap bgNotif;
-
 	int watt = 0;
 	int wattCount = 0;
 
-	static final int MSG_SAVE_STATUS = 0;
-//	static final int MSG_DAILY_RESET = 1;
-	static final long StatusSaveIntervalMs = 60 * 60 * 1000;
+	static final int NOTIFICATION_ID = 0;
+	NotificationManager notificationManager;
+	Notification secondPage;
+	Notification thirdPage;
+	Bitmap bgNotif;
+	Intent displayIntent;
 
 
 	//	private SQLiteDatabase db;
@@ -78,13 +83,16 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		@Override
 		public void handleMessage(Message message){
 			if(message!=null) {
+				long timeMs = System.currentTimeMillis();
+				long delayMs;// = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
 				switch (message.what){
 					//60分毎にsharedPreference書き込み
 					case MSG_SAVE_STATUS:
-						long timeMs = System.currentTimeMillis();
-						long delayMs = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
+//						long timeMs = System.currentTimeMillis();
+						delayMs = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
 						//0時にリセット
 						if((timeMs/(1000*60*60)%24)==0){
+							Log.d(TAG,"Daily Update");
 							Calendar calendar = Calendar.getInstance();
 							String newDate = calendar.get(Calendar.YEAR)+String.format("%02d",calendar.get(Calendar.MONTH)+1)+String.format("%02d",calendar.get(Calendar.DAY_OF_MONTH));
 							sharedPreferences.edit()
@@ -97,15 +105,17 @@ public class PocketPikachuService extends Service implements SensorEventListener
 						savePikachuStatus();
 						StepCountUpdater.sendEmptyMessageDelayed(MSG_SAVE_STATUS, delayMs);
 						break;
-//					case MSG_DAILY_RESET:
-//
-//						break;
+					case MSG_UPDATE_NOTIFICATION:	//todo 15分おき通知更新	毎時01,16,31,46分
+						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs) + (60 * 1000);
+						notificationUpdater();
+						StepCountUpdater.sendEmptyMessageDelayed(MSG_UPDATE_NOTIFICATION, delayMs);
+						break;
 				}
-//			}else{
-//				return;
 			}
 		}
 	};
+
+
 
 
 	@Override
@@ -130,6 +140,12 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		}
 		Log.d(TAG,"Date: "+date);
 
+		//Notification関連初期設定
+		notificationManager = ((NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE));
+		bgNotif = BitmapFactory.decodeResource(getResources(), R.mipmap.pika_bg);
+			// todo 仲良し度に合わせた画像		背景は画面、ピカチュウはカラー → GIMPでつくる
+		displayIntent = new Intent(getApplicationContext(), PikachuDisplayActivity.class);
+
 		//センサー初期化
 		mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
 		sensorStepCounter = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
@@ -153,22 +169,18 @@ public class PocketPikachuService extends Service implements SensorEventListener
 
 		//タイマー解除
 		StepCountUpdater.removeMessages(MSG_SAVE_STATUS);
-//		StepCountUpdater.removeMessages(MSG_DAILY_RESET);
+		StepCountUpdater.removeMessages(MSG_UPDATE_NOTIFICATION);
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId){
 		Log.d(TAG, "onStartCommand");
 
-//		time.setToNow();
-//		date = time.year+String.format("%02d",time.month+1)+String.format("%02d",time.monthDay);
-//		prevStepCount = sharedPreferences.getInt(KEY_PREF_STEP_COUNT_SINCE_YESTERDAY,0);
-
 		//タイマー開始
 		StepCountUpdater.removeMessages(MSG_SAVE_STATUS);
 		StepCountUpdater.sendEmptyMessage(MSG_SAVE_STATUS);
-//		StepCountUpdater.removeMessages(MSG_DAILY_RESET);
-//		StepCountUpdater.sendEmptyMessage(MSG_DAILY_RESET);
+		StepCountUpdater.removeMessages(MSG_UPDATE_NOTIFICATION);
+		StepCountUpdater.sendEmptyMessage(MSG_UPDATE_NOTIFICATION);
 
 		//センサー開始
 		if(!sensorFlag){
@@ -196,44 +208,37 @@ public class PocketPikachuService extends Service implements SensorEventListener
 
 	public void notificationUpdater(){	//todo 通知の更新
 		Log.d(TAG,"notificationUpdater");
-		Intent displayIntent = new Intent(getApplicationContext(), PikachuDisplayActivity.class);
 
-		bgNotif = BitmapFactory.decodeResource(getResources(), R.mipmap.pika_bg);
-//		bgNotif = BitmapFactory.decodeResource(getResources(), R.color.yellow);
-		// todo 仲良し度に合わせた画像		背景は画面、ピカチュウはカラー → GIMPでつくる
-
-		Notification secondPage = new NotificationCompat.Builder(this)
+		secondPage = new NotificationCompat.Builder(this)
 				.setContentTitle(getString(R.string.step_total))
 				.setContentText(String.format("%24d 歩", stepTotal))
-//				.setStyle(new NotificationCompat.InboxStyle()
-//						.addLine(String.format("Total:%12d歩", stepTotal))
-//						.addLine(String.format("%20dワット",watt)))
 				.build();
 
-		Notification thirdPage = new NotificationCompat.Builder(this)
-				.setContentTitle(getString(R.string.notif_title_friend))
-				.setContentText("なみなカンジ Now!")
-				.build();
-
+//		thirdPage = new NotificationCompat.Builder(this)
+//				.setContentTitle(getString(R.string.notif_title_friend))
+//				.setContentText("なみなカンジ Now!")
+//				.build();
 
 		Notification notification = new Notification.Builder(getApplicationContext())
 				.setPriority(1)
 				.setSmallIcon(R.mipmap.pika_icon_a)
 				.setLargeIcon(bgNotif)
-				.setContentTitle(getString(R.string.step_today) + String.format("%12d 歩", stepToday))
-				.setContentText(String.format("%21d Watt", watt))
+				.setContentTitle(String.format(getString(R.string.step_today)+"%10d 歩", stepToday))
+				.setContentText(String.format("%19d Watt", watt))
 				.extend(new Notification.WearableExtender()
 						.addPage(secondPage)
 //						.setBackground(bgNotif)
 						.setCustomSizePreset(Notification.WearableExtender.SIZE_XSMALL))
 //						.addPage(thirdPage))
+//						//１ページ目にActivityの内容を表示
 //						.setDisplayIntent(PendingIntent.getActivity(getApplicationContext(), 0, displayIntent,
 //								PendingIntent.FLAG_UPDATE_CURRENT)))
 				.addAction(R.mipmap.pika_icon_a,    //todo 白地アイコン作成
 						getString(R.string.show_status),
 						PendingIntent.getActivity(getApplicationContext(), 0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT))
 				.build();
-		((NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, notification);
+
+		notificationManager.notify(NOTIFICATION_ID, notification);
 	}
 
 
@@ -244,6 +249,29 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		return w;
 	}
 
+
+
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+			Log.d(TAG, "stepCounter:" + event.values[0]);
+			if(sensorFlag) {
+//				mSensorManager.unregisterListener(this, sensorStepCounter);
+//				sensorFlag = false;
+
+				if(prevStep==-1){	//初回起動時
+					prevStep = (int)event.values[0];
+				}else{
+					int diff = (int)event.values[0] - prevStep;
+					stepToday += diff;
+					stepTotal += diff;
+					watt += wattCounter(diff);	//ワット加算
+					prevStep = (int)event.values[0];
+				}
+			}
+		}
+	}
 
 
 //	public void updateStepCount(){
@@ -264,47 +292,6 @@ public class PocketPikachuService extends Service implements SensorEventListener
 //		date = time.year+String.format("%02d",time.month+1)+String.format("%02d",time.monthDay);
 //	}
 
-	@Override
-	public void onSensorChanged(SensorEvent event) {
-		if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-			Log.d(TAG, "stepCounter:" + event.values[0]);
-			if(sensorFlag) {
-//				mSensorManager.unregisterListener(this, sensorStepCounter);
-//				sensorFlag = false;
-
-				if(prevStep==-1){	//初回起動時
-					prevStep = (int)event.values[0];
-				}else{
-					int diff = (int)event.values[0] - prevStep;
-					stepToday += diff;
-					stepTotal += diff;
-					watt += wattCounter(diff);	//ワット加算
-					prevStep = (int)event.values[0];
-				}
-
-
-
-
-//				//SharedPreferenceに記録
-//				SharedPreferences.Editor editor = sharedPreferences.edit();
-//				editor.putInt(KEY_PREF_TODAY_STEP_COUNT, (int) todayStepCount);
-//				editor.apply();
-
-//				//午前2時にリセット
-//				int TimeMin = (int)tmpTimeMs/(1000*60);
-//				int dayAmari = TimeMin%(60*24);
-//				if(dayAmari==120){	//2:00:00~2:00:59
-////				if(dayAmari==0){	//0:00:00~0:00:59
-//					todayStepCount = 0;
-//					editor.putInt(KEY_PREF_STEP_COUNT_SINCE_YESTERDAY,(int)event.values[0]).apply();
-//					saveDailyStepCount();	//DBに記録
-//					Log.d("Pika","AM2:00 reset");
-//				}
-//				sensorState=false;
-//				Log.d("Pika","Sensor unregistered [sensorChanged] today's step:"+todayStepCount);
-			}
-		}
-	}
 
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
