@@ -95,6 +95,7 @@ public class PocketPikachuService extends Service implements SensorEventListener
 					//60分毎にsharedPreference書き込み
 					case MSG_SAVE_STATUS:
 //						long timeMs = System.currentTimeMillis();
+						Log.d(TAG,"update");
 						delayMs = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
 						calendar = Calendar.getInstance();
 						String date = calendar.get(Calendar.YEAR)+String.format("%02d",calendar.get(Calendar.MONTH)+1)+String.format("%02d",calendar.get(Calendar.DAY_OF_MONTH));
@@ -110,8 +111,8 @@ public class PocketPikachuService extends Service implements SensorEventListener
 						}
 						savePikachuStatus();
 						notificationUpdater();
-						StepCountUpdater.sendEmptyMessageDelayed(MSG_UPDATE_NOTIF_15, delayMs);
 						currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
+						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
 						break;
 					case MSG_SET_UPDATE:	//最初だけ
 						calendar = Calendar.getInstance();
@@ -130,22 +131,28 @@ public class PocketPikachuService extends Service implements SensorEventListener
 						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_15:	//15分
+						Log.d(TAG,"update:15");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+						savePikachuStatus();
 						notificationUpdater();
-						StepCountUpdater.sendEmptyMessageDelayed(MSG_UPDATE_NOTIF_30, delayMs);
 						currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
+						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_30:	//30分
+						Log.d(TAG,"update:30");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+						savePikachuStatus();
 						notificationUpdater();
-						StepCountUpdater.sendEmptyMessageDelayed(MSG_UPDATE_NOTIF_45, delayMs);
 						currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
+						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_45:	//45分
+						Log.d(TAG,"update:45");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+						savePikachuStatus();
 						notificationUpdater();
-						StepCountUpdater.sendEmptyMessageDelayed(MSG_SAVE_STATUS, delayMs);
 						currentMsgNotifNum = MSG_SAVE_STATUS;
+						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
 						break;
 				}
 			}
@@ -175,7 +182,7 @@ public class PocketPikachuService extends Service implements SensorEventListener
 			sharedPreferences.edit().putString(KEY_PREF_STEP_DATE, date).apply();
 			stepToday = 0;
 		}
-		Log.d(TAG,"Date: "+date);
+		Log.d(TAG,"Date: "+date+", stepTotal:"+stepTotal);
 
 		//Notification関連初期設定
 		notificationManager = ((NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE));
@@ -242,7 +249,7 @@ public class PocketPikachuService extends Service implements SensorEventListener
 
 
 	public void notificationUpdater(){	//todo 通知の更新
-		Log.d(TAG,"notificationUpdater");
+		Log.d(TAG,"notificationUpdater stepToday:"+stepToday+", stepTotal:"+stepTotal);
 
 		secondPage = new NotificationCompat.Builder(this)
 				.setContentTitle(getString(R.string.step_total))
