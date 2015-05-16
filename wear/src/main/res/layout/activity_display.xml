@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			  xmlns:tools="http://schemas.android.com/tools"
-			  android:layout_width="match_parent"
-			  android:layout_height="wrap_content"
-			  android:paddingTop="@dimen/card_content_padding_rect_top"
-			  android:orientation="vertical"
-			  tools:context=".PikachuDisplayActivity"
-			  tools:deviceIds="wear">
-	<ImageView
-		android:id="@+id/notif_icon"
-		android:layout_width="48dp"
-		android:layout_height="48dp"
-		android:src="@mipmap/pika_icon_a"/>
+			xmlns:tools="http://schemas.android.com/tools"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:paddingTop="@dimen/card_content_padding_rect_top"
+			android:orientation="vertical"
+			android:background="@mipmap/pika_bg"
+			tools:context=".PikachuDisplayActivity"
+			tools:deviceIds="wear">
 	<TextView
 		android:id="@+id/step_today"
-		android:layout_width="match_parent"
+		android:layout_width="120dp"
 		android:layout_height="wrap_content"
-		android:layout_toRightOf="@id/notif_icon"
 		android:gravity="right"
-		android:text="@string/app_notif_msg"/>
+		android:text="@string/app_notif_msg"
+		android:layout_centerHorizontal="true"
+		android:layout_alignParentEnd="false"
+		android:layout_marginTop="25dp"/>
+	<ImageView
+		android:id="@+id/pikachu"
+		android:layout_width="120dp"
+		android:layout_height="120dp"
+		android:src="@mipmap/pika_icon_a"
+		android:layout_centerVertical="true"
+		android:layout_centerHorizontal="true"
+		/>
 
 
 </RelativeLayout>

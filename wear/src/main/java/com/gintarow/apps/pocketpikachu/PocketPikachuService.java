@@ -19,6 +19,7 @@ import android.os.Message;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import java.lang.ref.WeakReference;
 import java.util.Calendar;
 
 
@@ -84,10 +85,17 @@ public class PocketPikachuService extends Service implements SensorEventListener
 //	long tmpTimeMs;
 //
 //
-	final Handler StepCountUpdater = new Handler(){
+
+	private static class UpdateHandler extends Handler{
+		private final WeakReference<PocketPikachuService> service;
+		UpdateHandler(PocketPikachuService s){
+			service = new WeakReference<PocketPikachuService>(s);
+		}
+
 		@Override
 		public void handleMessage(Message message){
-			if(message!=null) {
+			PocketPikachuService s = this.service.get();
+			if(message!=null && s!=null) {
 				long timeMs = System.currentTimeMillis();
 				long delayMs;// = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
 				Calendar calendar;
@@ -95,71 +103,149 @@ public class PocketPikachuService extends Service implements SensorEventListener
 					//60分毎にsharedPreference書き込み
 					case MSG_SAVE_STATUS:
 //						long timeMs = System.currentTimeMillis();
-						Log.d(TAG,"update");
+						Log.d(TAG,"update:00");
 						delayMs = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
 						calendar = Calendar.getInstance();
 						String date = calendar.get(Calendar.YEAR)+String.format("%02d",calendar.get(Calendar.MONTH)+1)+String.format("%02d",calendar.get(Calendar.DAY_OF_MONTH));
 						//0時にリセット
-						if(!today.equals(date)){	//日が変わってたら
+						if(!s.today.equals(date)){	//日が変わってたら
 							Log.d(TAG,"Daily Update");
-							sharedPreferences.edit()
-									.putString(KEY_PREF_STEP_DATE, date)
-									.putInt(KEY_PREF_STEP_YESTERDAY, stepToday)
+							s.today = date;
+							s.sharedPreferences.edit()
+									.putString(KEY_PREF_STEP_DATE, s.today)
+									.putInt(KEY_PREF_STEP_YESTERDAY, s.stepToday)
 									.apply();
-							stepToday = 0;
+							s.stepToday = 0;
 							//todo 仲良しポイント減点
 						}
-						savePikachuStatus();
-						notificationUpdater();
-						currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
-						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+						s.savePikachuStatus();
+						s.notificationUpdater();
+						s.currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
+						s.StepCountUpdater.sendEmptyMessageDelayed(s.currentMsgNotifNum, delayMs);
 						break;
 					case MSG_SET_UPDATE:	//最初だけ
 						calendar = Calendar.getInstance();
 						int min = calendar.get(Calendar.MINUTE);
 						if(min<15){
-							currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
+							s.currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
 						}else if(min<30){
-							currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
+							s.currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
 						}else if(min<45){
-							currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
+							s.currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
 						}else{
-							currentMsgNotifNum = MSG_SAVE_STATUS;
+							s.currentMsgNotifNum = MSG_SAVE_STATUS;
 						}
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
 //						notificationUpdater();
-						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+						s.StepCountUpdater.sendEmptyMessageDelayed(s.currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_15:	//15分
 						Log.d(TAG,"update:15");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
-						savePikachuStatus();
-						notificationUpdater();
-						currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
-						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+						s.savePikachuStatus();
+						s.notificationUpdater();
+						s.currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
+						s.StepCountUpdater.sendEmptyMessageDelayed(s.currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_30:	//30分
 						Log.d(TAG,"update:30");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
-						savePikachuStatus();
-						notificationUpdater();
-						currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
-						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+						s.savePikachuStatus();
+						s.notificationUpdater();
+						s.currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
+						s.StepCountUpdater.sendEmptyMessageDelayed(s.currentMsgNotifNum, delayMs);
 						break;
 					case MSG_UPDATE_NOTIF_45:	//45分
 						Log.d(TAG,"update:45");
 						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
-						savePikachuStatus();
-						notificationUpdater();
-						currentMsgNotifNum = MSG_SAVE_STATUS;
-						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+						s.savePikachuStatus();
+						s.notificationUpdater();
+						s.currentMsgNotifNum = MSG_SAVE_STATUS;
+						s.StepCountUpdater.sendEmptyMessageDelayed(s.currentMsgNotifNum, delayMs);
 						break;
 				}
 			}
 		}
-	};
 
+	}
 
+	final UpdateHandler StepCountUpdater = new UpdateHandler(this);
+
+//	final Handler StepCountUpdater = new Handler(){
+//		@Override
+//		public void handleMessage(Message message){
+//			if(message!=null) {
+//				long timeMs = System.currentTimeMillis();
+//				long delayMs;// = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
+//				Calendar calendar;
+//				switch (message.what){
+//					//60分毎にsharedPreference書き込み
+//					case MSG_SAVE_STATUS:
+////						long timeMs = System.currentTimeMillis();
+//						Log.d(TAG,"update:00");
+//						delayMs = StatusSaveIntervalMs - (timeMs % StatusSaveIntervalMs);
+//						calendar = Calendar.getInstance();
+//						String date = calendar.get(Calendar.YEAR)+String.format("%02d",calendar.get(Calendar.MONTH)+1)+String.format("%02d",calendar.get(Calendar.DAY_OF_MONTH));
+//						//0時にリセット
+//						if(!today.equals(date)){	//日が変わってたら
+//							Log.d(TAG,"Daily Update");
+//							today = date;
+//							sharedPreferences.edit()
+//									.putString(KEY_PREF_STEP_DATE, today)
+//									.putInt(KEY_PREF_STEP_YESTERDAY, stepToday)
+//									.apply();
+//							stepToday = 0;
+//							//todo 仲良しポイント減点
+//						}
+//						savePikachuStatus();
+//						notificationUpdater();
+//						currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
+//						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+//						break;
+//					case MSG_SET_UPDATE:	//最初だけ
+//						calendar = Calendar.getInstance();
+//						int min = calendar.get(Calendar.MINUTE);
+//						if(min<15){
+//							currentMsgNotifNum = MSG_UPDATE_NOTIF_15;
+//						}else if(min<30){
+//							currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
+//						}else if(min<45){
+//							currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
+//						}else{
+//							currentMsgNotifNum = MSG_SAVE_STATUS;
+//						}
+//						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+////						notificationUpdater();
+//						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+//						break;
+//					case MSG_UPDATE_NOTIF_15:	//15分
+//						Log.d(TAG,"update:15");
+//						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+//						savePikachuStatus();
+//						notificationUpdater();
+//						currentMsgNotifNum = MSG_UPDATE_NOTIF_30;
+//						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+//						break;
+//					case MSG_UPDATE_NOTIF_30:	//30分
+//						Log.d(TAG,"update:30");
+//						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+//						savePikachuStatus();
+//						notificationUpdater();
+//						currentMsgNotifNum = MSG_UPDATE_NOTIF_45;
+//						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+//						break;
+//					case MSG_UPDATE_NOTIF_45:	//45分
+//						Log.d(TAG,"update:45");
+//						delayMs = NotificationUpdateIntervalMs - (timeMs % NotificationUpdateIntervalMs);
+//						savePikachuStatus();
+//						notificationUpdater();
+//						currentMsgNotifNum = MSG_SAVE_STATUS;
+//						StepCountUpdater.sendEmptyMessageDelayed(currentMsgNotifNum, delayMs);
+//						break;
+//				}
+//			}
+//		}
+//	};
 
 
 	@Override
@@ -179,7 +265,8 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		if(date.equals(today)) {
 			stepToday = sharedPreferences.getInt(KEY_PREF_STEP_TODAY, 0);
 		}else{
-			sharedPreferences.edit().putString(KEY_PREF_STEP_DATE, date).apply();
+			today = date;
+			sharedPreferences.edit().putString(KEY_PREF_STEP_DATE, today).apply();
 			stepToday = 0;
 		}
 		Log.d(TAG,"Date: "+date+", stepTotal:"+stepTotal);
@@ -233,7 +320,7 @@ public class PocketPikachuService extends Service implements SensorEventListener
 		//通知
 		notificationUpdater();
 
-		return START_NOT_STICKY;
+		return START_STICKY;
 	}
 
 
