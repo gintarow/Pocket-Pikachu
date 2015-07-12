@@ -16,12 +16,12 @@
 		android:text="@string/app_notif_msg"
 		android:layout_centerHorizontal="true"
 		android:layout_alignParentEnd="false"
-		android:layout_marginTop="25dp"/>
+		android:layout_marginTop="30dp"/>
 	<ImageView
 		android:id="@+id/pikachu"
-		android:layout_width="120dp"
-		android:layout_height="120dp"
-		android:src="@mipmap/pika_icon_a"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@mipmap/pika_01_1"
 		android:layout_centerVertical="true"
 		android:layout_centerHorizontal="true"
 		/>

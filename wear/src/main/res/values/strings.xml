@@ -3,6 +3,7 @@
 	<string name="app_activity">ピカチュウ</string>
 	<string name="app_notif_msg">Pikachu</string>
 	<string name="show_status">ようすをみる</string>
+	<string name="update">更新</string>
 	<string name="step_ho">歩</string>
 	<string name="step_today">今日</string>
 	<string name="step_total">Total</string>
