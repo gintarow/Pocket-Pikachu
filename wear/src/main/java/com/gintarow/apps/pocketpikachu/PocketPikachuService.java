@@ -354,7 +354,7 @@ public class PocketPikachuService extends Service implements SensorEventListener
 //				.build();
 
 		Notification notification = new Notification.Builder(getApplicationContext())
-				.setPriority(1)
+				.setPriority(Notification.PRIORITY_HIGH)	// 1
 				.setSmallIcon(R.mipmap.pika_icon_a)
 				.setLargeIcon(bgNotif)
 				.setContentTitle(String.format(getString(R.string.step_today) + "%10d 歩", stepToday))
@@ -367,10 +367,10 @@ public class PocketPikachuService extends Service implements SensorEventListener
 //						//１ページ目にActivityの内容を表示
 //						.setDisplayIntent(PendingIntent.getActivity(getApplicationContext(), 0, displayIntent,
 //								PendingIntent.FLAG_UPDATE_CURRENT)))
-				.addAction(R.mipmap.pika_icon_w,    //todo 白地アイコン作成
+				.addAction(R.mipmap.pika_icon_wh_alpha,    //todo 白地アイコン作成
 						getString(R.string.update),
 						PendingIntent.getActivity(getApplicationContext(), 0, updateIntent, PendingIntent.FLAG_UPDATE_CURRENT))
-				.addAction(R.mipmap.pika_icon_w,    //todo 白地アイコン作成
+				.addAction(R.mipmap.pika_icon_wh_alpha,    //todo 白地アイコン作成
 						getString(R.string.show_status),
 						PendingIntent.getActivity(getApplicationContext(), 0, displayIntent, PendingIntent.FLAG_UPDATE_CURRENT))
 				.build();
